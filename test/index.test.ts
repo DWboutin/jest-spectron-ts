@@ -3,26 +3,32 @@ const Application = require("spectron").Application;
 const electron = require("electron");
 
 jest.setTimeout(10000); // increase to 50000 on low spec laptop
-let app: any = null;
 
-beforeAll(function() {
-  app = new Application({
-    path: electron,
-    args: [path.join(__dirname, "..", "src", "index.ts")]
+let app: any = new Application({
+  path: electron,
+  args: [path.join(__dirname, "..", ".webpack", "main", "index.js")]
+});
+
+describe("test", () => {
+  beforeAll(async () => {
+    await app.start();
   });
 
-  return app.start();
-});
+  afterAll(async () => {
+    if (app && app.isRunning()) {
+      await app.stop();
+    }
+  });
 
-afterAll(function() {
-  if (app && app.isRunning()) {
-    return app.stop();
-  }
-});
+  it("shows an initial window", async () => {
+    const windowCount = await app.client.getWindowCount();
 
-test("App Init", async function() {
-  let isVisible = await app.browserWindow.isVisible();
-  expect(isVisible).toBe(true);
-  let count = await app.client.getWindowCount();
-  expect(count).toEqual(1);
+    expect(windowCount).toBe(1);
+  });
+
+  it("should have correct text", async () => {
+    const h1Text = await app.client.getText("h1");
+
+    expect(h1Text).toEqual("💖 Hello World!");
+  });
 });
